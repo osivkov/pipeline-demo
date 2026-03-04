@@ -24,7 +24,7 @@ jobs:
           bash -n release-keeper/deploy/deploy.sh
 
       - name: ShellCheck (lint)
-        uses: ludeeus/action-shellcheck@v1
+        uses: koalaman/shellcheck@v1
         with:
           scandir: release-keeper/deploy/deploy.sh
 

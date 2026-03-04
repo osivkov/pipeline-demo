@@ -23,7 +23,7 @@ jobs:
         run: |
           bash -n release-keeper/deploy/deploy.sh
 
-      - name: Shellcheck (lint)
+      - name: ShellCheck (lint)
         uses: ludeeus/action-shellcheck@2
         with:
           scandir: release-keeper/deploy

@@ -144,6 +144,8 @@ rollback()
 		exit 1
 	fi
 
+	:"${RELEASES_DIR:?RELEASES_DIR is empty}"
+
 	CURRENT_TARGET="$(readlink "$DEPLOY_ROOT/current" 2>/dev/null || true )"
 	CURRENT_RELEASE="$(basename "$CURRENT_TARGET")"
 	if [[ -z "$CURRENT_RELEASE" ]]; then

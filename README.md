@@ -1,3 +1,4 @@
+# Release Keeper (Bash CI/CD Pet Project)
 
 [![CI](https://github.com/osivkov/release-keeper/actions/workflows/pipeline.yml/badge.svg)](https://github.com/osivkov/release-keeper/actions/workflows/pipeline.yml)
 

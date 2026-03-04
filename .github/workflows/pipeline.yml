@@ -45,8 +45,10 @@ jobs:
 
           # EXPECT failure, but continue to verify rollback
           set +e
+          echo "Before fail, current -> $(readlink /tmp/deploy_root/current)"
           FAIL_AFTER_SWITCH=1 release-keeper/deploy/deploy.sh release /tmp/src /tmp/deploy_root
           rc=$?
+          echo "After fail, current -> $(readlink /tmp/deploy_root/current)"
           set -e
 
           echo "exit_code=$rc"

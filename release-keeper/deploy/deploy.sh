@@ -46,7 +46,7 @@ release()
 
 	mkdir -p "$RELEASE_DIR"
 
-	RELEASE_ID=$(date +%Y%m%d-%H%M%S)
+	RELEASE_ID=$(date +%Y%m%d-%H%M%S-%N)
 	NEW_RELEASE="$RELEASE_DIR/$RELEASE_ID"
 
 	echo "Creating release: $NEW_RELEASE"

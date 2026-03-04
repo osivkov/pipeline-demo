@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  bash-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show tree (debug)
+        run: |
+         pwd
+         ls -la
+         find release-keeper -maxdepth 3 -type f -print
+         
+      - name: Bash syntax check (deploy.sh)
+        run: |
+          bash -n release-keeper/deploy/deploy.sh
+        
+        -name: Smoke deploy (success path)
+         run: |
+         set -e
+         mkdir -p /tmp/src
+         echo "OK VERSION" > /tmp/src/index.html
+
+         mkdir -p /tmp/deploy_root
+         release-keeper/deploy/deploy.sh release /tmp/src /tmp/deploy_root
+
+         echo "Current point to:"
+         readlink /tmp/deploy_root/current
+         echo "Current content:"
+         cat /tmp/deploy_root/current/index.html
+
+        -name: Fail deploy + verify rollback (fail path)
+         run: |
+            set -e
+            echo "BROKEN VERSION" > /tmp/src/index.html
+
+          #IMPORTANT: we EXPECT failure here, but we watn to continue to check rollback
+          set +e
+          FAIL_AFTER_SWITCH=1 release-keeper/deploy/deploy.sh release /tmp/src /tmp/deploy_root
+          rc=$?
+          set -e
+
+          echo "exit_code=$rc"
+          if [[ $rc -eq 0 ]];then
+            echo "Expected failure but got success"
+            exit 1
+          fi
+
+          echo "Current content after failed deploy (should be OK VERSION):"
+          cat /tmp/deploy_root/current/index.html
+
+          if ! grep -q "OK VERSION" /tmp/deploy_root/current/index.html; then
+            echo "ROLLBACK did NOT work"
+            exit 1
+          fi

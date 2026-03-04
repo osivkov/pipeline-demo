@@ -20,7 +20,7 @@ jobs:
           find release-keeper -maxdepth 3 -type f -print
 
       - name: Bash syntax check (deploy.sh)
-         run: |
+        run: |
             bash -n release-keeper/deploy/deploy.sh
           
       - name: ShellCheck (lint)

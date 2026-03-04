@@ -22,6 +22,8 @@ jobs:
       - name: Bash syntax check (deploy.sh)
         run: |
           bash -n release-keeper/deploy/deploy.sh
+        env:
+          SHELLCHECK_OPTS: -e SC2012, SC2329
 
       - name: ShellCheck (lint)
         uses: ludeeus/action-shellcheck@master

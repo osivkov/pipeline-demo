@@ -1,6 +1,6 @@
 # Release Keeper (Bash CI/CD Pet Project)
 
-[![CI](https://github.com/osivkov/release-keeper/actions/workflows/pipeline.yml/badge.svg)](https://github.com/osivkov/release-keeper/actions/workflows/pipeline.yml)
+[![CI](https://github.com/osivkov/pipeline-demo/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/osivkov/pipeline-demo/actions/workflows/pipeline.yml)
 
 **Release Keeper** is a small Bash deployment tool that demonstrates a
 widely used real‑world deployment pattern.

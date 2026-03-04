@@ -39,8 +39,8 @@ jobs:
           cat /tmp/deploy_root/current/index.html
 
 
-        - name: Rollback command (manual) test
-          run: |
+      - name: Rollback command (manual) test
+        run: |
             set -e
 
             # clean test area

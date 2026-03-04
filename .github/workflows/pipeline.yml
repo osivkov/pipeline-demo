@@ -23,7 +23,7 @@ jobs:
         run: |
           bash -n release-keeper/deploy/deploy.sh
         
-        -name: Smoke deploy (success path)
+        - name: Smoke deploy (success path)
          run: |
          set -e
          mkdir -p /tmp/src
@@ -37,7 +37,7 @@ jobs:
          echo "Current content:"
          cat /tmp/deploy_root/current/index.html
 
-        -name: Fail deploy + verify rollback (fail path)
+        - name: Fail deploy + verify rollback (fail path)
          run: |
             set -e
             echo "BROKEN VERSION" > /tmp/src/index.html

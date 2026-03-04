@@ -24,9 +24,9 @@ jobs:
           bash -n release-keeper/deploy/deploy.sh
 
       - name: ShellCheck (lint)
-        uses: ludeeus/action-shellcheck@2
+        uses: ludeeus/action-shellcheck@v1
         with:
-          scandir: release-keeper/deploy
+          scandir: release-keeper/deploy/deploy.sh
 
       - name: Smoke deploy (success path)
         run: |

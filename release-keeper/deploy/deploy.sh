@@ -33,13 +33,39 @@ on_exit()
 	fi
 }
 
+
+populate_release()
+{
+	INPUT="$1"
+	DEST="$2"
+
+	if [[ -d "$INPUT" ]]; then
+		cp -r "$INPUT/"* "$DEST/"
+		return 0
+	fi
+
+	if [[ -f "$INPUT" ]]; then
+		case "$INPUT" in 
+		*.tar.gz|*.tgz)
+			tar -xzf "$INPUT" -C "$DEST"
+			return 0
+			;;
+		esac
+	fi
+
+	echo "Unsupported input: $INPUT"
+	echo "Expected a directory or .tar.gz/.tgz file"
+	exit 1
+
+}
+
 release()
 {
 	SRC_DIR="$1"
 	DEPLOY_ROOT="$2"
 
-	if [[ ! -d "$SRC_DIR" ]]; then
-		echo "Source directory not found: $SRC_DIR"
+	if [[ ! -e "$SRC_DIR" ]]; then
+		echo "INPUT not found: $SRC_DIR"
 		exit 1
 	fi
 
@@ -54,9 +80,9 @@ release()
 
 	mkdir "$NEW_RELEASE"
 
-	echo "Copying files..."
+	echo "Populating release...."
 
-	cp -r "$SRC_DIR/"* "$NEW_RELEASE/"
+	populate_release "$SRC_DIR" "$NEW_RELEASE"
 
 	DEPLOY_ROOT_FOR_TRAP="$DEPLOY_ROOT"
 	PREV_CURRENT="$(readlink "$DEPLOY_ROOT/current" 2>/dev/null || true)"
@@ -166,6 +192,7 @@ rollback()
 	ln -sfn "$ABS_RELEASES_DIR/$PREV_RELEASE" "$DEPLOY_ROOT/current"
 
 }
+
 
 main()
 {

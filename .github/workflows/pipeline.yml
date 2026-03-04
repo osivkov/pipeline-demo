@@ -44,6 +44,21 @@ jobs:
 
           echo "Current content:"
           cat /tmp/deploy_root/current/index.html
+          
+      - name: Deploy from artifact (tar.gz) test
+        run: |
+          set -e
+          rm -rf /tmp/artifact_test
+          mkdir -p /tmp/artifact_test/src
+          mkdir -p /tmp/artifact_test/deploy_root
+
+          echo "FROM ARTIFACT" > /tmp/artifact_test/src/index.html
+          tar -czf /tmp/site.tar.gz -C /tmp/artifact_test/src .
+
+          release-keeper/deploy/deploy.sh release /tmp/site.tar.gz /tmp/artifact_test/deploy_root
+
+          cat /tmp/artifact_test/deploy_root/current/index.html
+          grep -q "FROM ARTIFACT" /tmp/artifact_test/deploy_root/current/index.html
 
 
       - name: Rollback command (manual) test

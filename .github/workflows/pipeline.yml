@@ -20,10 +20,11 @@ jobs:
           find release-keeper -maxdepth 3 -type f -print
 
       - name: Bash syntax check (deploy.sh)
-        run: |
-          bash -n release-keeper/deploy/deploy.sh
+        uses: ludeeus/action-shellcheck@master
         env:
           SHELLCHECK_OPTS: -e SC2012, SC2329
+        with:
+          scandir: release-keeper/deploy/deploy.sh
 
       - name: ShellCheck (lint)
         uses: ludeeus/action-shellcheck@master

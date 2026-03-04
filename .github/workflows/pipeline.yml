@@ -38,6 +38,38 @@ jobs:
           echo "Current content:"
           cat /tmp/deploy_root/current/index.html
 
+
+        - name: Rollback command (manual) test
+        run: |
+          set -e
+
+          # clean test area
+          rm -rf /tmp/rollback_test
+          mkdir -p /tmp/rollback_test/src
+          mkdir -p /tmp/rollback_test/deploy_root
+
+          # release 1: OK
+          echo "OK VERSION" > /tmp/rollback_test/src/index.html
+          release-keeper/deploy/deploy.sh release /tmp/rollback_test/src /tmp/rollback_test/deploy_root
+          echo "After OK release:"
+          cat /tmp/rollback_test/deploy_root/current/index.html
+
+          # release 2: BROKEN (becomes current)
+          echo "BROKEN VERSION" > /tmp/rollback_test/src/index.html
+          release-keeper/deploy/deploy.sh release /tmp/rollback_test/src /tmp/rollback_test/deploy_root
+          echo "After BROKEN release:"
+          cat /tmp/rollback_test/deploy_root/current/index.html
+
+          # manual rollback should restore OK
+          release-keeper/deploy/deploy.sh rollback /tmp/rollback_test/deploy_root
+          echo "After rollback:"
+          cat /tmp/rollback_test/deploy_root/current/index.html
+
+          if ! grep -q "OK VERSION" /tmp/rollback_test/deploy_root/current/index.html; then
+            echo "Manual rollback did NOT restore OK VERSION"
+            exit 1
+          fi
+
       - name: Fail deploy + verify rollback (fail path)
         run: |
           set -e

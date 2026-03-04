@@ -2,276 +2,322 @@
 
 [![CI](https://github.com/osivkov/release-keeper/actions/workflows/pipeline.yml/badge.svg)](https://github.com/osivkov/release-keeper/actions/workflows/pipeline.yml)
 
-**Release Keeper** is a small Bash deployment tool that demonstrates a widely used real-world deployment pattern:
+**Release Keeper** is a small Bash deployment tool that demonstrates a
+widely used real‑world deployment pattern.
 
-- versioned **releases/** directories  
-- a **current** symlink pointing to the active release  
-- an **atomic switch** to a new version (symlink update)  
-- **automatic rollback** on failure (via `trap`)  
-- **manual rollback** command  
-- safe cleanup of old releases  
-- deploy from a **directory** or from a **.tar.gz / .tgz artifact** (CI-style)
+Key features:
 
-This is a learning project focused on **DevOps / CI/CD fundamentals**: safe Bash scripting, deployment patterns, safety guards, and CI verification.
+-   versioned **releases/** directories\
+-   a **current** symlink pointing to the active release\
+-   **atomic deployment switch** (symlink update)\
+-   **automatic rollback** on failure using `trap`\
+-   **manual rollback** command\
+-   safe cleanup of old releases\
+-   deployment from **directory or artifact (.tar.gz / .tgz)**
 
----
+This repository is designed as a **DevOps learning project**
+demonstrating safe Bash scripting, CI validation, and a classic
+deployment strategy.
 
-## Why this pattern?
+------------------------------------------------------------------------
 
-This layout is popular because it makes deployments and rollbacks fast and safe:
+# Why this pattern?
 
-- the new version is prepared in a separate folder  
-- once ready, `current` is repointed to the new release (**atomic in practice**)  
-- rollback is just another symlink update  
+This deployment layout is widely used because it makes deployments
+**fast, reversible, and safe**.
 
-It’s a common building block behind many deployment systems.
+The idea:
 
----
+1.  Prepare the new version in a separate directory.
+2.  When everything is ready --- update a single pointer (`current`).
+3.  If something fails --- point it back.
 
-## Requirements
+Advantages:
 
-- Linux/macOS:
-  - `bash`
-  - `tar`, `cp`, `ln`, `readlink`, `sort`, `grep`, `head`, `tail`
-- Optional (recommended):
-  - `shellcheck`
+-   deployments are very fast
+-   rollback takes milliseconds
+-   multiple versions stay on disk for debugging
 
----
+This pattern appears in many real deployment systems.
 
-## Repository Layout
+------------------------------------------------------------------------
 
-From the repo root:
+# Deployment Architecture
 
-```text
-.
-├── .github/workflows/pipeline.yml      # CI workflow (GitHub Actions)
-├── .gitignore
-├── README.md
-└── release-keeper
-    ├── deploy
-    │   ├── deploy.sh                   # main CLI tool
-    │   └── lib.sh                      # reserved for future helpers
-    ├── src
-    │   └── index.html                  # demo app content
-    └── deploy_root/                    # runtime state (DO NOT COMMIT)
-        ├── current -> releases/<id>
-        └── releases/<id>/...
-```
+                  CI Pipeline
+                       │
+                       ▼
+               Build Artifact (.tar.gz)
+                       │
+                       ▼
+                 deploy.sh release
+                       │
+                       ▼
+         deploy_root/releases/<release_id>/
+                       │
+                       ▼
+            current -> releases/<release_id>
+                       │
+                       ▼
+                  Running Version
 
-> **Important:** `release-keeper/deploy_root/` is deployment runtime state.  
-> In real projects it lives on a server, not in Git. Keep it ignored.
+The **symlink switch** acts as a practical atomic deployment step.
+
+------------------------------------------------------------------------
+
+# Requirements
+
+Linux or macOS with:
+
+-   `bash`
+-   `tar`
+-   `cp`
+-   `ln`
+-   `readlink`
+-   `sort`
+-   `grep`
+-   `head`
+-   `tail`
+
+Optional but recommended:
+
+-   `shellcheck`
+
+------------------------------------------------------------------------
+
+# Repository Layout
+
+    .
+    ├── .github/workflows/pipeline.yml
+    ├── .gitignore
+    ├── README.md
+    └── release-keeper
+        ├── deploy
+        │   ├── deploy.sh
+        │   └── lib.sh
+        ├── src
+        │   └── index.html
+        └── deploy_root/
+            ├── current -> releases/<id>
+            └── releases/<id>/
+
+Important:
+
+`release-keeper/deploy_root/` is **runtime deployment state**.
+
+In production this directory would live on a **server**, not in Git.
 
 Add to `.gitignore`:
 
-```gitignore
-release-keeper/deploy_root/
-```
+    release-keeper/deploy_root/
 
----
+------------------------------------------------------------------------
 
-## Core idea: releases + current symlink
+# Quick Start
 
-A deployment creates a new directory:
+Clean deployment directory:
 
-```text
-deploy_root/releases/<release_id>/
-```
+    rm -rf release-keeper/deploy_root
+    mkdir -p release-keeper/deploy_root
 
-Then it switches the active version by updating a symlink:
+Deploy from source directory:
 
-```text
-deploy_root/current -> deploy_root/releases/<release_id>
-```
+    ./release-keeper/deploy/deploy.sh release release-keeper/src release-keeper/deploy_root
 
-Example after a few deployments:
+Inspect the active version:
 
-```text
-deploy_root/
-  releases/
-    20260304-153613-...
-    20260304-153618-...
-  current -> releases/20260304-153618-...
-```
+    readlink release-keeper/deploy_root/current
+    cat release-keeper/deploy_root/current/index.html
 
----
+------------------------------------------------------------------------
 
-## Quick Start (local)
+# Commands
 
-From the repo root:
+Run commands from repository root.
 
-```bash
-# start clean
-rm -rf release-keeper/deploy_root
-mkdir -p release-keeper/deploy_root
+### Deploy from directory
 
-# deploy from directory
-./release-keeper/deploy/deploy.sh release release-keeper/src release-keeper/deploy_root
+    ./release-keeper/deploy/deploy.sh release release-keeper/src release-keeper/deploy_root
 
-# inspect current
-readlink release-keeper/deploy_root/current
-cat release-keeper/deploy_root/current/index.html
-```
+------------------------------------------------------------------------
 
----
+### Deploy from artifact
 
-## Commands
+Create artifact:
 
-Run commands from the repo root.
+    tar -czf /tmp/site.tar.gz -C release-keeper/src .
 
-### 1) Release (deploy) from a directory
+Deploy artifact:
 
-```bash
-./release-keeper/deploy/deploy.sh release release-keeper/src release-keeper/deploy_root
-```
+    ./release-keeper/deploy/deploy.sh release /tmp/site.tar.gz release-keeper/deploy_root
 
-Creates a new release directory and points `deploy_root/current` to it.
+Artifact structure expected:
 
----
+    ./
+    ./index.html
 
-### 2) Release (deploy) from an artifact (.tar.gz / .tgz)
+------------------------------------------------------------------------
 
-This simulates a real CI pipeline: build an artifact → deploy it.
+### List releases
 
-Create an artifact:
+    ./release-keeper/deploy/deploy.sh list release-keeper/deploy_root
 
-```bash
-tar -czf /tmp/site.tar.gz -C release-keeper/src .
-```
+------------------------------------------------------------------------
 
-Deploy the artifact:
+### Manual rollback
 
-```bash
-./release-keeper/deploy/deploy.sh release /tmp/site.tar.gz release-keeper/deploy_root
-```
+    ./release-keeper/deploy/deploy.sh rollback release-keeper/deploy_root
 
-**Artifact format expectation:** archive should contain `index.html` at the root level:
+Switches `current` to the most recent release that is **not the current
+one**.
 
-```text
-./
-./index.html
-```
+------------------------------------------------------------------------
 
----
+### Cleanup old releases
 
-### 3) List releases
+Keep the last N releases:
 
-```bash
-./release-keeper/deploy/deploy.sh list release-keeper/deploy_root
-```
+    ./release-keeper/deploy/deploy.sh cleanup release-keeper/deploy_root 3
 
----
+The active release is **never deleted**.
 
-### 4) Manual rollback
+------------------------------------------------------------------------
 
-```bash
-./release-keeper/deploy/deploy.sh rollback release-keeper/deploy_root
-```
+# Automatic Rollback
 
-Switches `current` to the most recent release that is **not** the current one.
+During deployment the script:
 
----
+1.  remembers previous `current`
+2.  switches `current` to new release
+3.  if an error occurs --- rollback restores the previous version
 
-### 5) Cleanup old releases
+Implemented via:
 
-Keep the last **N** releases and remove older ones without deleting the active release:
+    trap on_exit EXIT
 
-```bash
-./release-keeper/deploy/deploy.sh cleanup release-keeper/deploy_root 3
-```
+Simulate failure:
 
-If the active release is among the “old” ones, it will be skipped (safety first).  
-That may result in keeping more than N releases, which is intended.
+    FAIL_AFTER_SWITCH=1 ./release-keeper/deploy/deploy.sh release release-keeper/src release-keeper/deploy_root
 
----
+Expected result:
 
-## Automatic rollback (trap)
+-   command exits with non‑zero status
+-   `current` returns to previous version
 
-During `release`, the script:
+------------------------------------------------------------------------
 
-1. remembers where `current` pointed before the switch  
-2. switches `current` to the new release  
-3. if a failure happens after switching, it restores the previous `current` value automatically  
+# Safety Practices
 
-This is implemented via a Bash `trap` on `EXIT`:
-if exit code ≠ 0 → rollback.
+Some Bash constructs may look unusual:
 
-Simulate a failure after switching:
+    : "${RELEASES_DIR:?RELEASES_DIR is empty}"
+    rm -rf -- "$TARGET"
 
-```bash
-FAIL_AFTER_SWITCH=1 ./release-keeper/deploy/deploy.sh release release-keeper/src release-keeper/deploy_root
-```
+They protect against catastrophic mistakes such as:
 
-Expected:
-- command exits with a non-zero code  
-- `current` returns to the previous release  
+    rm -rf /
 
----
+This is a common **production safety pattern** in Bash scripts.
 
-## Safety notes (why some Bash looks “weird”)
+------------------------------------------------------------------------
 
-You’ll see patterns like:
+# Design Decisions
 
-```bash
-: "${RELEASES_DIR:?RELEASES_DIR is empty}"
-rm -rf -- "$TARGET"
-```
+### Atomic deploy switch
 
-They prevent catastrophic mistakes (e.g. `rm -rf /`) when a variable is empty or a path is malformed.  
-This is a standard production safety habit in Bash scripting.
+The release is fully prepared **before** switching `current`.
 
----
+### Rollback using trap
 
-## Design decisions (short)
+If the script exits with a failure code, the previous release is
+restored.
 
-- **Symlink switch = atomic in practice**  
-  The new release is fully prepared before switching `current`.
+### Safety guards
 
-- **Rollback via `trap`**  
-  If the script exits with a non-zero status after switching, it restores the previous `current`.
+Explicit checks prevent dangerous filesystem operations.
 
-- **Safety guards**  
-  Explicit checks are used to prevent dangerous filesystem operations when variables are empty.
+------------------------------------------------------------------------
 
----
+# CI Pipeline
 
-## CI Pipeline (GitHub Actions)
+Workflow file:
 
-Workflow: `.github/workflows/pipeline.yml`
+    .github/workflows/pipeline.yml
 
-On each push / PR it runs:
+Each push / pull request runs:
 
-- Bash syntax check (`bash -n`)
-- ShellCheck lint
-- smoke deploy test (happy path)
-- deploy-from-artifact test (`tar.gz`)
-- manual rollback test
-- fail + auto-rollback test (expected failure, then verification)
+-   Bash syntax check (`bash -n`)
+-   ShellCheck lint
+-   smoke deploy test
+-   artifact deployment test
+-   manual rollback test
+-   failure simulation with automatic rollback
 
-All deployment tests run under `/tmp/` on the GitHub runner.
+All tests run inside temporary directories under `/tmp/`.
 
----
+------------------------------------------------------------------------
 
-## What this project teaches
+# Example CI Output
 
-- safe Bash scripting with `set -Eeuo pipefail`
-- atomic deployments using symlinks
-- rollback patterns (automatic + manual)
-- safe cleanup of old releases
-- CI checks and failure scenarios
-- artifact-based deployment (tar.gz), like real pipelines
+Example pipeline run:
 
----
+    Run bash -n deploy.sh
+    ✔ syntax OK
 
-## Roadmap (ideas)
+    Run shellcheck
+    ✔ no critical issues
 
-- `status` command (show current + last N releases)
-- more reliable “previous release” selection (metadata file, explicit ordering)
-- `rsync` instead of `cp` for faster incremental deploys
-- health-check before switching `current`
-- structured logs for CI
+    Run smoke deploy
+    ✔ deployment succeeded
 
----
+    Run rollback test
+    ✔ rollback restored previous release
 
-## Author
+    Run failure simulation
+    ✔ automatic rollback triggered
+
+------------------------------------------------------------------------
+
+# Where This Pattern Is Used
+
+This deployment strategy is similar to approaches used by:
+
+-   Capistrano deployments
+-   Ansible-based release systems
+-   internal CI/CD pipelines
+-   some Kubernetes rollout strategies
+-   many traditional Linux deployments
+
+The core idea:
+
+**prepare new version → switch pointer → rollback instantly if needed**
+
+------------------------------------------------------------------------
+
+# What This Project Demonstrates
+
+-   safe Bash scripting (`set -Eeuo pipefail`)
+-   deployment automation
+-   atomic deploy strategy using symlinks
+-   automatic rollback logic
+-   CI validation
+-   artifact-based deployment
+
+------------------------------------------------------------------------
+
+# Roadmap
+
+Possible future improvements:
+
+-   `status` command
+-   release metadata tracking
+-   `rsync` deploy for faster updates
+-   health-check before switching versions
+-   structured logging
+-   containerized demo environment
+
+------------------------------------------------------------------------
+
+# Author
 
 **Alexander Sivkov**

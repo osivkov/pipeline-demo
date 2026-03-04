@@ -129,7 +129,7 @@ cleanup()
 			continue
 		fi
 		TARGET="$RELEASES_DIR/$r"
-		echo "Removing $TARGET/$r"
+		echo "Removing $TARGET"
 		rm -rf -- "$TARGET"
 	done
 }

@@ -22,7 +22,7 @@ jobs:
       - name: Bash syntax check (deploy.sh)
         uses: ludeeus/action-shellcheck@master
         env:
-          SHELLCHECK_OPTS: -e SC2012, SC2329
+          SHELLCHECK_OPTS: -e SC2012,SC2329
         with:
           scandir: release-keeper/deploy/deploy.sh
 

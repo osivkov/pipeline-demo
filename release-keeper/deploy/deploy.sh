@@ -98,6 +98,9 @@ cleanup()
 		echo "No releases directory"
 		exit 0
 	fi
+	
+	: "${RELEASES_DIR:?RELEASES_DIR is empty}"
+
 	CURRENT_TARGET="$(readlink "$DEPLOY_ROOT/current" 2>/dev/null || true )"
 	CURRENT_RELEASE="$(basename "$CURRENT_TARGET")"
 
@@ -125,8 +128,9 @@ cleanup()
 			echo "Skipping active release: $r"
 			continue
 		fi
-		echo "Removing $RELEASES_DIR/$r"
-		rm -rf "$RELEASES_DIR/$r"
+		TARGET="$RELEASES_DIR/$r"
+		echo "Removing $TARGET/$r"
+		rm -rf -- "$TARGET"
 	done
 }
 
